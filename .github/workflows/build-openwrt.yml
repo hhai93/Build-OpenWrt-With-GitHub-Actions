@@ -159,7 +159,7 @@ jobs:
           export CXX="ccache g++"
           export PATH="/usr/lib/ccache:$PATH"
           cd openwrt
-          make --assume-old=staging_dir/toolchain-* --assume-old=build_dir/toolchain-* toolchain/install
+          make --assume-old=staging_dir/toolchain-* --assume-old=build_dir/toolchain-* toolchain/install -j$(nproc)
           make --assume-old=staging_dir/target-* --assume-old=build_dir/target-* -j$(nproc)
 
       - name: ccache stats
