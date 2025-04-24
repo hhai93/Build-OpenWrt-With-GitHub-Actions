@@ -11,7 +11,7 @@ This repository automates building custom OpenWrt firmware using GitHub Actions,
 -  **Scheduled Builds**: Run builds automatically or manually.
 -  **Firmware Upload**: Publishes firmware files to GitHub Releases and Artifacts.
 -  **Notifications**: Sends Telegram alerts for new releases.
--  **Storage Cleanup**: Removes old runs and releases to save space.
+-  **Cache**: Use cache to reduce time between builds.
 -  **Customizable**: Adjust source, branch, config, and DIY scripts easily.
 -  **SSH Access**: Interactive `make menuconfig` via SSH for advanced configuration.
 
@@ -21,9 +21,8 @@ This repository automates building custom OpenWrt firmware using GitHub Actions,
 
 📋 Ensure you have:
 
--  A GitHub account and repository (fork this repo or create a new one).
 -  A Telegram bot token and chat ID (optional, via [BotFather](https://t.me/BotFather)).
--  A GitHub Fine-grained Personal Access Token with "Contents" and "Workflows" write permission.
+-  A GitHub Personal Access Token with "Contents" and "Workflows" write permission. [Guide](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
 -  An OpenWrt `.config` file (generate via `make menuconfig` or copy from another source).
 
 ---
@@ -32,12 +31,12 @@ This repository automates building custom OpenWrt firmware using GitHub Actions,
 
 📝 Follow these steps:
 
-1. **Fork this Repository**:
+1. **Fork this Repository**
 
 2. **Set GitHub Secrets**:
    -  Go to **Settings > Secrets and variables > Actions > Secrets**.
    -  Add:
-     - `RELEASES_TOKEN`: GitHub Personal Access Token. [Guide](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
+     - `RELEASES_TOKEN`: GitHub Personal Access Token.
      - `TELEGRAM_TOKEN`: Telegram bot token.
      - `TELEGRAM_ID`: Telegram chat ID (use [@userinfobot](https://t.me/userinfobot)).
 
@@ -102,5 +101,4 @@ This repository automates building custom OpenWrt firmware using GitHub Actions,
 
 ## 🙌 Credits
 
-- P3TERX/Actions-OpenWrt for the original template and guide.
-- OpenWrt community for their excellent contributions.
+- **P3TERX/Actions-OpenWrt** for the original template and guide.
