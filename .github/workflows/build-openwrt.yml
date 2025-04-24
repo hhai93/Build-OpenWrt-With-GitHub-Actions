@@ -52,14 +52,14 @@ jobs:
         run: |
           git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
 
-      - name: Restore Toolchain cache
+      - name: Restore OpenWrt download cache
         uses: actions/cache@main
         with:
-          path: openwrt/staging_dir/toolchain-*
-          key: ${{ runner.os }}-toolchain-${{ hashFiles('.config') }}-${{ github.sha }}
+          path: openwrt/dl
+          key: ${{ runner.os }}-openwrt-dl-${{ hashFiles('.config') }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-toolchain-${{ hashFiles('.config') }}-
-
+            ${{ runner.os }}-openwrt-dl-${{ hashFiles('.config') }}-
+            
       - name: Restore Feeds cache
         uses: actions/cache@main
         with:
@@ -68,39 +68,33 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-feeds-${{ hashFiles('openwrt/feeds.conf') }}-
 
-      - name: Restore Staging Dir cache
-        uses: actions/cache@main
-        with:
-          path: |
-            openwrt/staging_dir/*
-            !openwrt/staging_dir/toolchain-*
-          key: ${{ runner.os }}-staging-dir-${{ hashFiles('.config') }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-staging-dir-${{ hashFiles('.config') }}-
-
       - name: Restore ccache
         uses: actions/cache@main
         with:
           path: .ccache
-          key: ${{ runner.os }}-ccache-${{ hashFiles('.config') }}
+          key: ${{ runner.os }}-ccache-${{ hashFiles('.config') }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-ccache-
+            ${{ runner.os }}-ccache-${{ hashFiles('.config') }}-
 
-      - name: Restore OpenWrt download cache
+      - name: Restore Toolchain cache
         uses: actions/cache@main
         with:
-          path: openwrt/dl
-          key: ${{ runner.os }}-openwrt-dl-${{ github.ref }}
+          path: |
+            openwrt/staging_dir/toolchain-*
+            openwrt/build_dir/toolchain-*
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('.config') }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-openwrt-dl-
-
-      - name: Restore IPK build cache
+            ${{ runner.os }}-toolchain-${{ hashFiles('.config') }}-
+      
+      - name: Restore package cache
         uses: actions/cache@main
         with:
-          path: openwrt/bin/targets/**/packages
-          key: ipk-${{ runner.os }}-${{ hashFiles('.config') }}
+          path: |
+            openwrt/staging_dir/target-*
+            openwrt/build_dir/target-*
+          key: ${{ runner.os }}-package-${{ hashFiles('.config') }}-${{ github.sha }}
           restore-keys: |
-            ipk-${{ runner.os }}-
+            ${{ runner.os }}-package-${{ hashFiles('.config') }}-
 
       - name: Update feeds
         run: |
@@ -147,7 +141,7 @@ jobs:
         uses: actions/cache/save@main
         with:
           path: openwrt/dl
-          key: ${{ runner.os }}-openwrt-dl-${{ github.ref }}
+          key: ${{ runner.os }}-openwrt-dl-${{ hashFiles('.config') }}-${{ github.sha }}
           
       - name: Enable ccache
         run: |
@@ -165,33 +159,13 @@ jobs:
           export CXX="ccache g++"
           export PATH="/usr/lib/ccache:$PATH"
           cd openwrt
-          make -j$(nproc) || make -j1 || make -j1 V=s
+          make --assume-old=staging_dir/toolchain-* --assume-old=build_dir/toolchain-* toolchain/install
+          make --assume-old=staging_dir/target-* --assume-old=build_dir/target-* -j$(nproc)
 
       - name: ccache stats
         run: |
           export CCACHE_DIR=$GITHUB_WORKSPACE/.ccache
           ccache -s
-
-      - name: Save ccache
-        if: always()
-        uses: actions/cache/save@main
-        with:
-          path: .ccache
-          key: ${{ runner.os }}-ccache-${{ hashFiles('.config') }}
-
-      - name: Save IPK build cache
-        if: always()
-        uses: actions/cache/save@main
-        with:
-          path: openwrt/bin/targets/**/packages
-          key: ipk-${{ runner.os }}-${{ hashFiles('.config') }}
-
-      - name: Save Toolchain cache
-        if: always()
-        uses: actions/cache/save@main
-        with:
-          path: openwrt/staging_dir/toolchain-*
-          key: ${{ runner.os }}-toolchain-${{ hashFiles('.config') }}-${{ github.sha }}
 
       - name: Save Feeds cache
         if: always()
@@ -200,14 +174,30 @@ jobs:
           path: openwrt/feeds
           key: ${{ runner.os }}-feeds-${{ hashFiles('openwrt/feeds.conf') }}-${{ github.sha }}
 
-      - name: Save Staging Dir cache
+      - name: Save ccache
+        if: always()
+        uses: actions/cache/save@main
+        with:
+          path: .ccache
+          key: ${{ runner.os }}-ccache-${{ hashFiles('.config') }}-${{ github.sha }}
+     
+      - name: Save Toolchain cache
         if: always()
         uses: actions/cache/save@main
         with:
           path: |
-            openwrt/staging_dir/*
-            !openwrt/staging_dir/toolchain-*
-          key: ${{ runner.os }}-staging-dir-${{ hashFiles('.config') }}-${{ github.sha }}
+            openwrt/staging_dir/toolchain-*
+            openwrt/build_dir/toolchain-*
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('.config') }}-${{ github.sha }}
+
+      - name: Save package cache
+        if: always()
+        uses: actions/cache/save@main
+        with:
+          path: |
+            openwrt/staging_dir/target-*
+            openwrt/build_dir/target-*
+          key: ${{ runner.os }}-package-${{ hashFiles('.config') }}-${{ github.sha }}
 
       - name: Organize files
         id: organize
@@ -255,19 +245,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.RELEASES_TOKEN }}
 
       - name: Send Telegram notification
-        if: steps.organize.outputs.status == 'success' && !cancelled()
+        if: success() && !cancelled()
         run: |
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage \
             -d chat_id=${{ secrets.TELEGRAM_ID }} \
             -d text="✅ New OpenWrt build #${{ github.run_number }} - ${{ env.FILE_DATE }} released! Check it at https://github.com/${{ github.repository }}/releases/tag/${{ steps.tag.outputs.release_tag }}" || \
             echo "Warning: Failed to send Telegram notification"
 
-      - name: Notify on failure
+      - name: Send Telegram notification on Failure
         if: failure()
         run: |
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage \
             -d chat_id=${{ secrets.TELEGRAM_ID }} \
-            -d text="⚠️ OpenWrt build #${{ github.run_number }} failed. Check logs at https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" || \
+            -d text="❌ OpenWrt build #${{ github.run_number }} failed! Check logs at https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" || \
             echo "Warning: Failed to send Telegram notification"
 
       - name: Delete old workflow runs
