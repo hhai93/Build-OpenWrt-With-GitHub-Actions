@@ -2,7 +2,7 @@
 
 ![GitHub](https://img.shields.io/badge/license-MIT-blue.svg) ![GitHub last commit](https://img.shields.io/github/last-commit/hhai93/Build-OpenWrt-With-GitHub-Actions)
 
-This repository automates building custom OpenWrt firmware using GitHub Actions, inspired by [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt). It supports scheduled builds, firmware uploads to GitHub Releases, Telegram notifications. The setup is highly customizable and user-friendly.
+This repository automates building custom OpenWrt firmware using GitHub Actions, inspired by [P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt). It supports scheduled builds, firmware uploads to GitHub Releases. The setup is highly customizable and user-friendly.
 
 ---
 
@@ -10,7 +10,6 @@ This repository automates building custom OpenWrt firmware using GitHub Actions,
 
 -  **Scheduled Builds**: Run builds automatically or manually.
 -  **Firmware Upload**: Publishes firmware files to GitHub Releases and Artifacts.
--  **Notifications**: Sends Telegram alerts for new releases.
 -  **Cache**: Use cache to reduce time between builds.
 -  **Customizable**: Adjust source, branch, config, and DIY scripts easily.
 -  **SSH Access**: Interactive `make menuconfig` via SSH for advanced configuration.
@@ -21,7 +20,6 @@ This repository automates building custom OpenWrt firmware using GitHub Actions,
 
 📋 Ensure you have:
 
--  A Telegram bot token and chat ID (optional, via [BotFather](https://t.me/BotFather)).
 -  A GitHub Personal Access Token with "Contents" and "Workflows" write permission. [Guide](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
 -  An OpenWrt `.config` file (generate via `make menuconfig` or copy from another source).
 
@@ -93,7 +91,6 @@ This repository automates building custom OpenWrt firmware using GitHub Actions,
 
 - **Build Fails**: Check Actions logs. Verify `.config` compatibility with `REPO_URL`. Run `make V=s` locally to debug.
 - **No Release**: Ensure `RELEASES_TOKEN` has `public_repo` scope.
-- **No Notifications**: Validate `TELEGRAM_TOKEN` and `TELEGRAM_ID`. Test bot manually.
 - **Storage Full**: Cleanup retains 30 days of runs and 5 releases. Reduce `retain_days` or `keep_latest` if needed.
 - **SSH Issues**: If `tmate` fails, check logs for SSH command or URL.
 
